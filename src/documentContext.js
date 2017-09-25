@@ -139,6 +139,7 @@ DocumentContext.prototype.moveTo = function (x, y) {
 	if (y !== undefined && y !== null) {
 		this.y = y;
 		this.availableHeight = this.getCurrentPage().pageSize.height - this.y - this.pageMargins.bottom;
+		// console.log('moveTo:', this.availableHeight)
 	}
 };
 

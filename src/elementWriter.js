@@ -30,6 +30,7 @@ ElementWriter.prototype.addLine = function (line, dontUpdateContextPosition, ind
 	var page = context.getCurrentPage(),
 		position = this.getCurrentPositionOnPage();
 
+	console.log('context.avaliableHeight:', context.availableHeight)
 	if (context.availableHeight < height || !page) {
 		return false;
 	}

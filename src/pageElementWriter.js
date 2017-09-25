@@ -85,9 +85,14 @@ PageElementWriter.prototype.beginUnbreakableBlock = function (width, height) {
 	}
 };
 
-PageElementWriter.prototype.commitUnbreakableBlock = function (forcedX, forcedY) {
+PageElementWriter.prototype.commitUnbreakableBlock = function (forcedX, forcedY, pageHeight) {
+	var contentHeight = 0;
+
 	if (--this.transactionLevel === 0) {
 		var unbreakableContext = this.writer.context;
+
+		contentHeight = pageHeight - this.writer.context.availableHeight;
+
 		this.writer.popContext();
 
 		var nbPages = unbreakableContext.pages.length;
@@ -119,11 +124,13 @@ PageElementWriter.prototype.commitUnbreakableBlock = function (forcedX, forcedY)
 			}
 		}
 	}
+
+	return contentHeight;
 };
 
 PageElementWriter.prototype.currentBlockToRepeatable = function () {
 	var unbreakableContext = this.writer.context;
-	var rep = {items: []};
+	var rep = { items: [] };
 
 	unbreakableContext.pages[0].items.forEach(function (item) {
 		rep.items.push(item);

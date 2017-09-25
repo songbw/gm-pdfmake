@@ -16,6 +16,7 @@ var fontStringify = require('./helpers').fontStringify;
 var isFunction = require('./helpers').isFunction;
 var TextTools = require('./textTools');
 var StyleContextStack = require('./styleContextStack');
+var ElementWriter = require('./elementWriter');
 
 function addAll(target, otherArray) {
 	_.each(otherArray, function (item) {
@@ -36,6 +37,8 @@ function LayoutBuilder(pageSize, pageMargins, imageMeasure) {
 	this.tracker = new TraversalTracker();
 	this.imageMeasure = imageMeasure;
 	this.tableLayouts = {};
+	this.pageHeaderHeight = 0;
+	this.pageFooterHeight = 0;
 }
 
 LayoutBuilder.prototype.registerTableLayouts = function (tableLayouts) {
@@ -116,6 +119,23 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 		});
 	}
 
+	var headerHeight = this.getHeaderHeight(header, () => ({
+		x: 0,
+		y: 0,
+		width: this.pageSize.width,
+		height: this.pageSize.height,
+	}));
+	var footerHeight = this.getHeaderHeight(footer, () => ({
+		x: 0,
+		y: 0,
+		width: this.pageSize.width,
+		height: this.pageSize.height,
+	}));
+	docStructure.dynamicMargin = {
+		header: headerHeight,
+		footer: footerHeight
+	};
+
 	var result = this.tryLayoutDocument(docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark);
 	while (addPageBreaksIfNecessary(result.linearNodeList, result.pages)) {
 		resetXYs(result);
@@ -126,6 +146,13 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 };
 
 LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
+	console.log('docSstructure:', docStructure.dynamicMargin, this.pageMargins)
+	if (docStructure.dynamicMargin) {
+		if (docStructure.dynamicMargin.header) this.pageMargins.top = docStructure.dynamicMargin.header;
+		if (docStructure.dynamicMargin.footer) this.pageMargins.bottom = docStructure.dynamicMargin.footer;
+	}
+
+	console.log('docSstructure:', docStructure.dynamicMargin, this.pageMargins)
 
 	this.linearNodeList = [];
 	docStructure = this.docPreprocessor.preprocessDocument(docStructure);
@@ -147,9 +174,32 @@ LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider
 		this.addWatermark(watermark, fontProvider, defaultStyle);
 	}
 
-	return {pages: this.writer.context().pages, linearNodeList: this.linearNodeList};
+	return { pages: this.writer.context().pages, linearNodeList: this.linearNodeList };
 };
 
+LayoutBuilder.prototype.getHeaderHeight = function (header, sizeFunction) {
+	this.linearNodeList = [];
+	this.writer = new PageElementWriter(
+		new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
+
+	if (isFunction(header)) {
+		return this.addDynamicRepeatable(header, sizeFunction);
+	} else if (header) {
+		return this.addStaticRepeatable(header, sizeFunction);
+	}
+};
+
+LayoutBuilder.prototype.getFooterHeight = function (footer, sizeFunction) {
+	this.linearNodeList = [];
+	this.writer = new PageElementWriter(
+		new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
+
+	if (isFunction(footer)) {
+		return this.addDynamicRepeatable(footer, sizeFunction);
+	} else if (footer) {
+		return this.addStaticRepeatable(footer, sizeFunction);
+	}
+};
 
 LayoutBuilder.prototype.addBackground = function (background) {
 	var backgroundGetter = isFunction(background) ? background : function () {
@@ -168,7 +218,7 @@ LayoutBuilder.prototype.addBackground = function (background) {
 };
 
 LayoutBuilder.prototype.addStaticRepeatable = function (headerOrFooter, sizeFunction) {
-	this.addDynamicRepeatable(function () {
+	return this.addDynamicRepeatable(function () {
 		return JSON.parse(JSON.stringify(headerOrFooter)); // copy to new object
 	}, sizeFunction);
 };
@@ -180,15 +230,21 @@ LayoutBuilder.prototype.addDynamicRepeatable = function (nodeGetter, sizeFunctio
 		this.writer.context().page = pageIndex;
 
 		var node = nodeGetter(pageIndex + 1, l, this.writer.context().pages[pageIndex].pageSize);
+		var contentHeight = 0;
 
 		if (node) {
 			var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins);
+			console.log('sizes:', sizes)
 			this.writer.beginUnbreakableBlock(sizes.width, sizes.height);
 			node = this.docPreprocessor.preprocessDocument(node);
 			this.processNode(this.docMeasure.measureDocument(node));
-			this.writer.commitUnbreakableBlock(sizes.x, sizes.y);
+			contentHeight = this.writer.commitUnbreakableBlock(sizes.x, sizes.y, this.writer.context().getCurrentPage().pageSize.height);
+
+			console.log('contentHeight:', contentHeight)
 		}
 	}
+
+	return contentHeight;
 };
 
 LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
@@ -202,6 +258,12 @@ LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
 	};
 
 	var footerSizeFct = function (pageSize, pageMargins) {
+		console.log('footerSize', pageSize, pageMargins, {
+			x: 0,
+			y: pageSize.height - pageMargins.bottom,
+			width: pageSize.width,
+			height: pageMargins.bottom
+		})
 		return {
 			x: 0,
 			y: pageSize.height - pageMargins.bottom,
@@ -225,7 +287,7 @@ LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
 
 LayoutBuilder.prototype.addWatermark = function (watermark, fontProvider, defaultStyle) {
 	if (typeof watermark === 'string') {
-		watermark = {'text': watermark};
+		watermark = { 'text': watermark };
 	}
 
 	if (!watermark.text) { // empty watermark text
@@ -256,7 +318,7 @@ LayoutBuilder.prototype.addWatermark = function (watermark, fontProvider, defaul
 		var height = pageSize.height;
 		var targetWidth = Math.sqrt(width * width + height * height) * 0.8; /* page diagonal * sample factor */
 		var textTools = new TextTools(fontProvider);
-		var styleContextStack = new StyleContextStack(null, {font: watermark.font, bold: watermark.bold, italics: watermark.italics});
+		var styleContextStack = new StyleContextStack(null, { font: watermark.font, bold: watermark.bold, italics: watermark.italics });
 		var size;
 
 		/**
@@ -284,7 +346,7 @@ LayoutBuilder.prototype.addWatermark = function (watermark, fontProvider, defaul
 		/*
 		 End binary search
 		 */
-		return {size: size, fontSize: c};
+		return { size: size, fontSize: c };
 	}
 };
 
@@ -470,7 +532,7 @@ LayoutBuilder.prototype.processRow = function (columns, widths, gaps, tableBody,
 		self.writer.context().completeColumnGroup();
 	});
 
-	return {pageBreaks: pageBreaks, positions: positions};
+	return { pageBreaks: pageBreaks, positions: positions };
 
 	function storePageBreakData(data) {
 		var pageDesc;
