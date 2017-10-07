@@ -1,6 +1,6 @@
 {
-  "name": "pdfmake",
-  "version": "0.1.32",
+  "name": "gm-pdfmake",
+  "version": "0.1.2",
   "description": "Client/server side PDF printing in pure JavaScript",
   "main": "src/printer.js",
   "directories": {
@@ -38,6 +38,7 @@
   },
   "scripts": {
     "build": "gulp build",
+    "publishpatch": "sh deploy/publish.sh",
     "test": "gulp"
   },
   "repository": {

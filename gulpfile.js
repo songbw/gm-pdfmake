@@ -31,12 +31,12 @@ gulp.task('build', function () {
 	return gulp.src('src/browser-extensions/pdfMake.js')
 		.pipe(webpack(require('./webpack.config.js'), null, reportWebPackErrors))
 		.pipe(replace(/\/[*/][@#]\s+sourceMappingURL=((?:(?!\s+\*\/).)*).*\n/g, ''))
-		.pipe(header(banner, {pkg: pkg}))
+		.pipe(header(banner, { pkg: pkg }))
 		.pipe(gulp.dest('build'))
 		.pipe(sourcemaps.init())
 		// .pipe(uglify(uglifyOptions))
-		.pipe(header(banner, {pkg: pkg}))
-		.pipe(rename({extname: '.min.js'}))
+		.pipe(header(banner, { pkg: pkg }))
+		.pipe(rename({ extname: '.min.js' }))
 		.pipe(sourcemaps.write('./'))
 		.pipe(gulp.dest('build'));
 });
@@ -60,13 +60,13 @@ gulp.task('test', ['prepareTestEnv'], function (cb) {
 gulp.task('prepareTestEnv', ['copy-src-with-exposed-test-methods', 'copy-tests']);
 
 gulp.task('copy-src-with-exposed-test-methods', function () {
-	return gulp.src(['src/**/*.js'], {base: './'})
+	return gulp.src(['src/**/*.js'], { base: './' })
 		.pipe(replace(/^(\/(\*)*TESTS.*$)/gm, '/$1'))
 		.pipe(gulp.dest('test-env'));
 });
 
 gulp.task('copy-tests', function () {
-	return gulp.src('tests/**/*.*', {base: './'})
+	return gulp.src('tests/**/*.*', { base: './' })
 		.pipe(gulp.dest('test-env'));
 });
 
@@ -84,7 +84,8 @@ gulp.task('buildFonts', function () {
 		}, 'buffer'))
 		.pipe(fc2json('vfs_fonts.js'))
 		.pipe(each(function (content, file, callback) {
-			var newContent = 'this.pdfMake = this.pdfMake || {}; this.pdfMake.vfs = ' + content + ';';
+			// var newContent = 'this.pdfMake = this.pdfMake || {}; this.pdfMake.vfs = ' + content + ';';
+			var newContent = 'export default ' + content;
 			callback(null, newContent);
 		}, 'buffer'))
 		.pipe(gulp.dest('build'));
