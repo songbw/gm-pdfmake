@@ -230,18 +230,18 @@ LayoutBuilder.prototype.addDynamicRepeatable = function (nodeGetter, sizeFunctio
 LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
 	var headerSizeFct = function (pageSize, pageMargins) {
 		return {
-			x: 0,
+			x: pageMargins.left,
 			y: 0,
-			width: pageSize.width,
+			width: pageSize.width - pageMargins.left - pageMargins.right,
 			height: pageMargins.top
 		};
 	};
 
 	var footerSizeFct = function (pageSize, pageMargins) {
 		return {
-			x: 0,
+			x: pageMargins.left,
 			y: pageSize.height - pageMargins.bottom,
-			width: pageSize.width,
+			width: pageSize.width - pageMargins.left - pageMargins.right,
 			height: pageMargins.bottom
 		};
 	};
