@@ -1,4 +1,4 @@
-/*! pdfmake v0.1.32, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.1.2, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -20000,8 +20000,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		this.tracker = new TraversalTracker();
 		this.imageMeasure = imageMeasure;
 		this.tableLayouts = {};
-		this.pageHeaderHeight = 0;
-		this.pageFooterHeight = 0;
 	}
 
 	LayoutBuilder.prototype.registerTableLayouts = function (tableLayouts) {
@@ -20082,13 +20080,13 @@ return /******/ (function(modules) { // webpackBootstrap
 			});
 		}
 
-		var headerHeight = this.getHeaderHeight(header, () => ({
+		var headerHeight = this.getHeight(header, () => ({
 			x: 0,
 			y: 0,
 			width: this.pageSize.width,
 			height: this.pageSize.height,
 		}));
-		var footerHeight = this.getHeaderHeight(footer, () => ({
+		var footerHeight = this.getHeight(footer, () => ({
 			x: 0,
 			y: 0,
 			width: this.pageSize.width,
@@ -20109,13 +20107,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
-		console.log('docSstructure:', docStructure.dynamicMargin, this.pageMargins)
 		if (docStructure.dynamicMargin) {
 			if (docStructure.dynamicMargin.header) this.pageMargins.top = docStructure.dynamicMargin.header;
 			if (docStructure.dynamicMargin.footer) this.pageMargins.bottom = docStructure.dynamicMargin.footer;
 		}
-
-		console.log('docSstructure:', docStructure.dynamicMargin, this.pageMargins)
 
 		this.linearNodeList = [];
 		docStructure = this.docPreprocessor.preprocessDocument(docStructure);
@@ -20140,7 +20135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		return { pages: this.writer.context().pages, linearNodeList: this.linearNodeList };
 	};
 
-	LayoutBuilder.prototype.getHeaderHeight = function (header, sizeFunction) {
+	LayoutBuilder.prototype.getHeight = function (header, sizeFunction) {
 		this.linearNodeList = [];
 		this.writer = new PageElementWriter(
 			new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
@@ -20149,18 +20144,6 @@ return /******/ (function(modules) { // webpackBootstrap
 			return this.addDynamicRepeatable(header, sizeFunction);
 		} else if (header) {
 			return this.addStaticRepeatable(header, sizeFunction);
-		}
-	};
-
-	LayoutBuilder.prototype.getFooterHeight = function (footer, sizeFunction) {
-		this.linearNodeList = [];
-		this.writer = new PageElementWriter(
-			new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
-
-		if (isFunction(footer)) {
-			return this.addDynamicRepeatable(footer, sizeFunction);
-		} else if (footer) {
-			return this.addStaticRepeatable(footer, sizeFunction);
 		}
 	};
 
@@ -20197,13 +20180,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			if (node) {
 				var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins);
-				console.log('sizes:', sizes)
 				this.writer.beginUnbreakableBlock(sizes.width, sizes.height);
 				node = this.docPreprocessor.preprocessDocument(node);
 				this.processNode(this.docMeasure.measureDocument(node));
 				contentHeight = this.writer.commitUnbreakableBlock(sizes.x, sizes.y, this.writer.context().getCurrentPage().pageSize.height);
-
-				console.log('contentHeight:', contentHeight)
 			}
 		}
 
@@ -20221,12 +20201,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		};
 
 		var footerSizeFct = function (pageSize, pageMargins) {
-			console.log('footerSize', pageSize, pageMargins, {
-				x: 0,
-				y: pageSize.height - pageMargins.bottom,
-				width: pageSize.width,
-				height: pageMargins.bottom
-			})
 			return {
 				x: 0,
 				y: pageSize.height - pageMargins.bottom,
@@ -24553,7 +24527,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		var page = context.getCurrentPage(),
 			position = this.getCurrentPositionOnPage();
 
-		console.log('context.avaliableHeight:', context.availableHeight)
 		if (context.availableHeight < height || !page) {
 			return false;
 		}
