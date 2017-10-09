@@ -1,4 +1,4 @@
-/*! gm-pdfmake v0.1.2, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.1.3, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -20196,7 +20196,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				x: pageMargins.left,
 				y: 0,
 				width: pageSize.width - pageMargins.left - pageMargins.right,
-				height: pageMargins.top
+				height: pageMargins.top + 10
 			};
 		};
 
@@ -20205,7 +20205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				x: pageMargins.left,
 				y: pageSize.height - pageMargins.bottom,
 				width: pageSize.width - pageMargins.left - pageMargins.right,
-				height: pageMargins.bottom
+				height: pageMargins.bottom + 10
 			};
 		};
 
@@ -66384,6 +66384,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		A2: [1190.55, 1683.78],
 		A3: [841.89, 1190.55],
 		A4: [595.28, 841.89],
+		"A4/2": [595.28, 420.94],
+		"A4/3": [595.28, 280.63],
 		A5: [419.53, 595.28],
 		A6: [297.64, 419.53],
 		A7: [209.76, 297.64],

@@ -233,7 +233,7 @@ LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
 			x: pageMargins.left,
 			y: 0,
 			width: pageSize.width - pageMargins.left - pageMargins.right,
-			height: pageMargins.top
+			height: pageMargins.top + 10
 		};
 	};
 
@@ -242,7 +242,7 @@ LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
 			x: pageMargins.left,
 			y: pageSize.height - pageMargins.bottom,
 			width: pageSize.width - pageMargins.left - pageMargins.right,
-			height: pageMargins.bottom
+			height: pageMargins.bottom + 10
 		};
 	};
 
