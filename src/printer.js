@@ -87,6 +87,8 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 		docDefinitions = [docDefinition];
 	}
 
+	docDefinition = docDefinitions[0];
+
 	var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 	this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
@@ -109,8 +111,6 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 	var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
 		return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 	}));
-
-	console.log('pages:', pages)
 
 	var maxNumberPages = docDefinition.maxPagesNumber || -1;
 	if (typeof maxNumberPages === 'number' && maxNumberPages > -1) {

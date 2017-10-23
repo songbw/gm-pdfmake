@@ -1,4 +1,4 @@
-/*! gm-pdfmake v0.1.5, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.2.1, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2367,6 +2367,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			docDefinitions = [docDefinition];
 		}
 
+		docDefinition = docDefinitions[0];
+
 		var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 		this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
@@ -2389,8 +2391,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
 			return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 		}));
-
-		console.log('pages:', pages)
 
 		var maxNumberPages = docDefinition.maxPagesNumber || -1;
 		if (typeof maxNumberPages === 'number' && maxNumberPages > -1) {
