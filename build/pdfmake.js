@@ -1,4 +1,4 @@
-/*! gm-pdfmake v0.1.3, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.1.5, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2362,6 +2362,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 		options = options || {};
 
+		var docDefinitions = docDefinition;
+		if (!_.isArray(docDefinition)) {
+			docDefinitions = [docDefinition];
+		}
+
 		var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 		this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
@@ -2378,7 +2383,14 @@ return /******/ (function(modules) { // webpackBootstrap
 			builder.registerTableLayouts(options.tableLayouts);
 		}
 
-		var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+		// var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+
+		var pages = [], me = this;
+		var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
+			return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+		}));
+
+		console.log('pages:', pages)
 
 		var maxNumberPages = docDefinition.maxPagesNumber || -1;
 		if (typeof maxNumberPages === 'number' && maxNumberPages > -1) {
@@ -66384,7 +66396,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		A2: [1190.55, 1683.78],
 		A3: [841.89, 1190.55],
 		A4: [595.28, 841.89],
-		"A4/2": [595.28, 420.94],
+		"A4/2": [595.28, 419.53],
 		"A4/3": [595.28, 280.63],
 		A5: [419.53, 595.28],
 		A6: [297.64, 419.53],

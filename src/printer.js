@@ -82,6 +82,11 @@ function PdfPrinter(fontDescriptors) {
 PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 	options = options || {};
 
+	var docDefinitions = docDefinition;
+	if (!_.isArray(docDefinition)) {
+		docDefinitions = [docDefinition];
+	}
+
 	var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 	this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
@@ -98,7 +103,14 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 		builder.registerTableLayouts(options.tableLayouts);
 	}
 
-	var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+	// var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+
+	var pages = [], me = this;
+	var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
+		return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+	}));
+
+	console.log('pages:', pages)
 
 	var maxNumberPages = docDefinition.maxPagesNumber || -1;
 	if (typeof maxNumberPages === 'number' && maxNumberPages > -1) {
