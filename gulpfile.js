@@ -34,7 +34,7 @@ gulp.task('build', function () {
 		.pipe(header(banner, { pkg: pkg }))
 		.pipe(gulp.dest('build'))
 		.pipe(sourcemaps.init())
-		// .pipe(uglify(uglifyOptions))
+		.pipe(uglify(uglifyOptions))
 		.pipe(header(banner, { pkg: pkg }))
 		.pipe(rename({ extname: '.min.js' }))
 		.pipe(sourcemaps.write('./'))

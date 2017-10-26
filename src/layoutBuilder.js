@@ -117,18 +117,22 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 		});
 	}
 
-	var headerHeight = this.getHeight(header, () => ({
-		x: 0,
-		y: 0,
-		width: this.pageSize.width,
-		height: this.pageSize.height,
-	}));
-	var footerHeight = this.getHeight(footer, () => ({
-		x: 0,
-		y: 0,
-		width: this.pageSize.width,
-		height: this.pageSize.height,
-	}));
+	var headerHeight = this.getHeight(header, function () {
+		return {
+			x: 0,
+			y: 0,
+			width: this.pageSize.width,
+			height: this.pageSize.height
+		};
+	});
+	var footerHeight = this.getHeight(footer, function () {
+		return {
+			x: 0,
+			y: 0,
+			width: this.pageSize.width,
+			height: this.pageSize.height
+		};
+	});
 	docStructure.dynamicMargin = {
 		header: headerHeight,
 		footer: footerHeight
