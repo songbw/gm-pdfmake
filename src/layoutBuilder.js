@@ -117,20 +117,21 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 		});
 	}
 
+	const me = this;
 	var headerHeight = this.getHeight(header, function () {
 		return {
 			x: 0,
 			y: 0,
-			width: this.pageSize.width,
-			height: this.pageSize.height
+			width: me.pageSize.width,
+			height: me.pageSize.height
 		};
 	});
 	var footerHeight = this.getHeight(footer, function () {
 		return {
 			x: 0,
 			y: 0,
-			width: this.pageSize.width,
-			height: this.pageSize.height
+			width: me.pageSize.width,
+			height: me.pageSize.height
 		};
 	});
 	docStructure.dynamicMargin = {

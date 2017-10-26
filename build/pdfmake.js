@@ -1,4 +1,4 @@
-/*! gm-pdfmake v0.2.2, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.2.5, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -20092,20 +20092,21 @@ return /******/ (function(modules) { // webpackBootstrap
 			});
 		}
 
+		const me = this;
 		var headerHeight = this.getHeight(header, function () {
 			return {
 				x: 0,
 				y: 0,
-				width: this.pageSize.width,
-				height: this.pageSize.height
+				width: me.pageSize.width,
+				height: me.pageSize.height
 			};
 		});
 		var footerHeight = this.getHeight(footer, function () {
 			return {
 				x: 0,
 				y: 0,
-				width: this.pageSize.width,
-				height: this.pageSize.height
+				width: me.pageSize.width,
+				height: me.pageSize.height
 			};
 		});
 		docStructure.dynamicMargin = {
