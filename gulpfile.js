@@ -84,8 +84,8 @@ gulp.task('buildFonts', function () {
 		}, 'buffer'))
 		.pipe(fc2json('vfs_fonts.js'))
 		.pipe(each(function (content, file, callback) {
-			// var newContent = 'this.pdfMake = this.pdfMake || {}; this.pdfMake.vfs = ' + content + ';';
-			var newContent = 'export default ' + content;
+			var newContent = 'this.pdfMake = this.pdfMake || {}; this.pdfMake.vfs = ' + content + ';';
+			// var newContent = 'export default ' + content;
 			callback(null, newContent);
 		}, 'buffer'))
 		.pipe(gulp.dest('build'));
