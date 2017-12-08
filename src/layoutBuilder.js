@@ -34,6 +34,7 @@ function addAll(target, otherArray) {
 function LayoutBuilder(pageSize, pageMargins, imageMeasure) {
 	this.pageSize = pageSize;
 	this.pageMargins = pageMargins;
+	this.dynamicMargins = pageMargins;
 	this.tracker = new TraversalTracker();
 	this.imageMeasure = imageMeasure;
 	this.tableLayouts = {};
@@ -122,7 +123,7 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 		return {
 			x: 0,
 			y: 0,
-			width: me.pageSize.width,
+			width: me.pageSize.width - me.pageMargins.left - me.pageMargins.right,
 			height: me.pageSize.height
 		};
 	});
@@ -130,13 +131,16 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 		return {
 			x: 0,
 			y: 0,
-			width: me.pageSize.width,
+			width: me.pageSize.width - me.pageMargins.left - me.pageMargins.right,
 			height: me.pageSize.height
 		};
 	});
-	docStructure.dynamicMargin = {
-		header: headerHeight,
-		footer: footerHeight
+
+	this.dynamicMargins = {
+		top: headerHeight ? this.pageMargins.top + headerHeight : this.pageMargins.top,
+		bottom: footerHeight ? this.pageMargins.bottom + footerHeight : this.pageMargins.bottom,
+		left: this.pageMargins.left,
+		right: this.pageMargins.right
 	};
 
 	var result = this.tryLayoutDocument(docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark);
@@ -149,17 +153,12 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 };
 
 LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
-	if (docStructure.dynamicMargin) {
-		if (docStructure.dynamicMargin.header) this.pageMargins.top = docStructure.dynamicMargin.header;
-		if (docStructure.dynamicMargin.footer) this.pageMargins.bottom = docStructure.dynamicMargin.footer;
-	}
-
 	this.linearNodeList = [];
 	docStructure = this.docPreprocessor.preprocessDocument(docStructure);
 	docStructure = this.docMeasure.measureDocument(docStructure);
 
 	this.writer = new PageElementWriter(
-		new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
+		new DocumentContext(this.pageSize, this.dynamicMargins), this.tracker);
 
 	var _this = this;
 	this.writer.context().tracker.startTracking('pageAdded', function () {
@@ -221,7 +220,7 @@ LayoutBuilder.prototype.addDynamicRepeatable = function (nodeGetter, sizeFunctio
 		var contentHeight = 0;
 
 		if (node) {
-			var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins);
+			var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins, this.dynamicMargins);
 			this.writer.beginUnbreakableBlock(sizes.width, sizes.height);
 			node = this.docPreprocessor.preprocessDocument(node);
 			this.processNode(this.docMeasure.measureDocument(node));
@@ -233,21 +232,21 @@ LayoutBuilder.prototype.addDynamicRepeatable = function (nodeGetter, sizeFunctio
 };
 
 LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
-	var headerSizeFct = function (pageSize, pageMargins) {
+	var headerSizeFct = function (pageSize, pageMargins, dynamicMargins) {
 		return {
 			x: pageMargins.left,
-			y: 0,
+			y: pageMargins.top,
 			width: pageSize.width - pageMargins.left - pageMargins.right,
-			height: pageMargins.top + 10
+			height: dynamicMargins.top
 		};
 	};
 
-	var footerSizeFct = function (pageSize, pageMargins) {
+	var footerSizeFct = function (pageSize, pageMargins, dynamicMargins) {
 		return {
 			x: pageMargins.left,
-			y: pageSize.height - pageMargins.bottom,
+			y: pageSize.height - dynamicMargins.bottom,
 			width: pageSize.width - pageMargins.left - pageMargins.right,
-			height: pageMargins.bottom + 10
+			height: dynamicMargins.bottom
 		};
 	};
 

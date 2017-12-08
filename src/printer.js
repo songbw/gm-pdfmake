@@ -92,23 +92,20 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 	var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 	this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
-	setMetadata(docDefinition, this.pdfKitDoc);
-
 	this.fontProvider = new FontProvider(this.fontDescriptors, this.pdfKitDoc);
-
-	docDefinition.images = docDefinition.images || {};
-
-	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images));
-
-	registerDefaultTableLayouts(builder);
-	if (options.tableLayouts) {
-		builder.registerTableLayouts(options.tableLayouts);
-	}
-
-	// var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 
 	var pages = [], me = this;
 	var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
+		setMetadata(docDefinition, me.pdfKitDoc);
+		docDefinition.images = docDefinition.images || {};
+
+		var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(me.pdfKitDoc, docDefinition.images));
+
+		registerDefaultTableLayouts(builder);
+		if (options.tableLayouts) {
+			builder.registerTableLayouts(options.tableLayouts);
+		}
+
 		return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 	}));
 

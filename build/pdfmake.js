@@ -1,4 +1,4 @@
-/*! gm-pdfmake v0.2.5, @license MIT, @link http://pdfmake.org */
+/*! gm-pdfmake v0.2.7, @license MIT, @link http://pdfmake.org */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2372,23 +2372,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
 
 		this.pdfKitDoc = new PdfKit({ size: [pageSize.width, pageSize.height], autoFirstPage: false, compress: docDefinition.compress || true });
-		setMetadata(docDefinition, this.pdfKitDoc);
-
 		this.fontProvider = new FontProvider(this.fontDescriptors, this.pdfKitDoc);
-
-		docDefinition.images = docDefinition.images || {};
-
-		var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images));
-
-		registerDefaultTableLayouts(builder);
-		if (options.tableLayouts) {
-			builder.registerTableLayouts(options.tableLayouts);
-		}
-
-		// var pages = builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 
 		var pages = [], me = this;
 		var pages = _.flatten(_.map(docDefinitions, function (docDefinition) {
+			setMetadata(docDefinition, me.pdfKitDoc);
+			docDefinition.images = docDefinition.images || {};
+
+			var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(me.pdfKitDoc, docDefinition.images));
+
+			registerDefaultTableLayouts(builder);
+			if (options.tableLayouts) {
+				builder.registerTableLayouts(options.tableLayouts);
+			}
+
 			return builder.layoutDocument(docDefinition.content, me.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || { fontSize: 12, font: 'Roboto' }, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
 		}));
 
@@ -20009,6 +20006,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function LayoutBuilder(pageSize, pageMargins, imageMeasure) {
 		this.pageSize = pageSize;
 		this.pageMargins = pageMargins;
+		this.dynamicMargins = pageMargins;
 		this.tracker = new TraversalTracker();
 		this.imageMeasure = imageMeasure;
 		this.tableLayouts = {};
@@ -20097,7 +20095,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			return {
 				x: 0,
 				y: 0,
-				width: me.pageSize.width,
+				width: me.pageSize.width - me.pageMargins.left - me.pageMargins.right,
 				height: me.pageSize.height
 			};
 		});
@@ -20105,13 +20103,16 @@ return /******/ (function(modules) { // webpackBootstrap
 			return {
 				x: 0,
 				y: 0,
-				width: me.pageSize.width,
+				width: me.pageSize.width - me.pageMargins.left - me.pageMargins.right,
 				height: me.pageSize.height
 			};
 		});
-		docStructure.dynamicMargin = {
-			header: headerHeight,
-			footer: footerHeight
+
+		this.dynamicMargins = {
+			top: headerHeight ? this.pageMargins.top + headerHeight : this.pageMargins.top,
+			bottom: footerHeight ? this.pageMargins.bottom + footerHeight : this.pageMargins.bottom,
+			left: this.pageMargins.left,
+			right: this.pageMargins.right
 		};
 
 		var result = this.tryLayoutDocument(docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark);
@@ -20124,17 +20125,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
-		if (docStructure.dynamicMargin) {
-			if (docStructure.dynamicMargin.header) this.pageMargins.top = docStructure.dynamicMargin.header;
-			if (docStructure.dynamicMargin.footer) this.pageMargins.bottom = docStructure.dynamicMargin.footer;
-		}
-
 		this.linearNodeList = [];
 		docStructure = this.docPreprocessor.preprocessDocument(docStructure);
 		docStructure = this.docMeasure.measureDocument(docStructure);
 
 		this.writer = new PageElementWriter(
-			new DocumentContext(this.pageSize, this.pageMargins), this.tracker);
+			new DocumentContext(this.pageSize, this.dynamicMargins), this.tracker);
 
 		var _this = this;
 		this.writer.context().tracker.startTracking('pageAdded', function () {
@@ -20196,7 +20192,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			var contentHeight = 0;
 
 			if (node) {
-				var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins);
+				var sizes = sizeFunction(this.writer.context().getCurrentPage().pageSize, this.pageMargins, this.dynamicMargins);
 				this.writer.beginUnbreakableBlock(sizes.width, sizes.height);
 				node = this.docPreprocessor.preprocessDocument(node);
 				this.processNode(this.docMeasure.measureDocument(node));
@@ -20208,21 +20204,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	LayoutBuilder.prototype.addHeadersAndFooters = function (header, footer) {
-		var headerSizeFct = function (pageSize, pageMargins) {
+		var headerSizeFct = function (pageSize, pageMargins, dynamicMargins) {
 			return {
 				x: pageMargins.left,
-				y: 0,
+				y: pageMargins.top,
 				width: pageSize.width - pageMargins.left - pageMargins.right,
-				height: pageMargins.top + 10
+				height: dynamicMargins.top
 			};
 		};
 
-		var footerSizeFct = function (pageSize, pageMargins) {
+		var footerSizeFct = function (pageSize, pageMargins, dynamicMargins) {
 			return {
 				x: pageMargins.left,
-				y: pageSize.height - pageMargins.bottom,
+				y: pageSize.height - dynamicMargins.bottom,
 				width: pageSize.width - pageMargins.left - pageMargins.right,
-				height: pageMargins.bottom + 10
+				height: dynamicMargins.bottom
 			};
 		};
 
