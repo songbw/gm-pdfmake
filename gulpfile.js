@@ -90,3 +90,23 @@ gulp.task('buildFonts', function () {
 		}, 'buffer'))
 		.pipe(gulp.dest('build'));
 });
+
+const splitFiles = require("gulp-split-files");
+
+gulp.task('splitFonts', function () {
+	return gulp.src(['./examples/fonts/*.*'])
+		.pipe(each(function (content, file, callback) {
+			var newContent = new Buffer(content).toString('base64');
+			var mid = Math.floor(newContent.length / 2);
+			newContent = newContent.slice(0, mid) + '/*split*/' + newContent.slice(mid);
+			callback(null, newContent);
+		}, 'buffer'))
+		.pipe(splitFiles())
+		.pipe(each(function (content, file, callback) {
+			var filename = file.relative.replace('.ttf', '');
+			var newContent = `this.pdfMakeFont = this.pdfMakeFont || {}; this.pdfMakeFont["${filename}"] = "${content}";`;
+			callback(null, newContent);
+		}, 'buffer'))
+		.pipe(rename({ extname: '.js' }))
+		.pipe(gulp.dest('build/splits'));
+});

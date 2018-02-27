@@ -6,7 +6,9 @@
   "directories": {
     "test": "tests"
   },
-  "dependencies": {},
+  "dependencies": {
+    "gulp-split-files": "^1.2.3"
+  },
   "devDependencies": {
     "file-saver": "^1.3.3",
     "iconv-lite": "^0.4.18",
