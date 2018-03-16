@@ -10,6 +10,7 @@ var jshint = require('gulp-jshint');
 var each = require('gulp-each');
 var fc2json = require('gulp-file-contents-to-json');
 var header = require('gulp-header');
+var umd = require('gulp-umd');
 var DEBUG = process.env.NODE_ENV === 'debug',
 	CI = process.env.CI === 'true';
 
@@ -97,16 +98,25 @@ gulp.task('splitFonts', function () {
 	return gulp.src(['./examples/fonts/*.*'])
 		.pipe(each(function (content, file, callback) {
 			var newContent = new Buffer(content).toString('base64');
+			var filename = file.relative.replace('.ttf', '').replace('-', '_');
 			var mid = Math.floor(newContent.length / 2);
-			newContent = newContent.slice(0, mid) + '/*split*/' + newContent.slice(mid);
+			newContent = `/*splitfilename=${filename}_0.js*/` + newContent.slice(0, mid) + `/*split*//*splitfilename=${filename}_1.js*/` + newContent.slice(mid);
 			callback(null, newContent);
 		}, 'buffer'))
 		.pipe(splitFiles())
 		.pipe(each(function (content, file, callback) {
-			var filename = file.relative.replace('.ttf', '');
-			var newContent = `this.pdfMakeFont = this.pdfMakeFont || {}; this.pdfMakeFont["${filename}"] = "${content}";`;
+			var filename = file.relative.replace('.js', '');
+			var newContent = `var ${filename} = "${content}";`;
 			callback(null, newContent);
 		}, 'buffer'))
-		.pipe(rename({ extname: '.js' }))
+		.pipe(umd({
+      exports: function(file) {
+          return file.relative.replace('.js', '');
+        },
+        namespace: function(file) {
+          return file.relative.replace('.js', '');
+        }
+    }))
+		.pipe(rename({ extname: '.js'}))
 		.pipe(gulp.dest('build/splits'));
 });
