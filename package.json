@@ -1,6 +1,6 @@
 {
   "name": "gm-pdfmake",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Client/server side PDF printing in pure JavaScript",
   "main": "build/pdfmake.min.js",
   "directories": {
