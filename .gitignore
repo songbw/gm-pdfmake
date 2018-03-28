@@ -9,3 +9,4 @@ doc
 test-env
 nbproject
 logs
+package-lock.json
